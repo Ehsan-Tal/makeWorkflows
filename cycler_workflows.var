@@ -1,0 +1,146 @@
+
+function initiate_procedure_cycler(){
+
+#	Initialisations
+
+	choice="${1}"
+	HOMELENGTH="${#HOME}"
+	local choiceArray=()
+	
+	declare -a filepathArray
+	declare -a cyclerDirArray
+	declare -a cyclerFileArray
+
+	local count
+	# ASSUME FILEPATH GIVEN
+	shopt -s nullglob
+	local filepathArrayUpload=( "${choice}"/* )
+	shopt -u nullglob
+
+
+#	BASIC SANITISATION
+	for filepathArrayUploadString in "${filepathArrayUpload[@]}"; do
+		
+		i=$(basename "$filepathArrayUploadString")
+
+#		echo " - file: $i"
+#		echo " - filepath: ${filepathArray["${index}"]}"
+
+		if [ ! "${i:0:1}" = "_" ]; then
+			
+			if [ -d "${filepathArrayUploadString}" ]; then
+				cyclerDirArray+=("${filepathArrayUploadString}")
+			else
+				cyclerFileArray+=("${filepathArrayUploadString}")
+			fi
+
+		fi
+
+	done
+	
+	unset filepathArrayUpload
+
+	for FILE in "${cyclerFileArray[@]}"; do
+		filepathArray+=("${FILE}")
+	done
+
+	for DIRECTORY in "${cyclerDirArray[@]}"; do
+		filepathArray+=("${DIRECTORY}")
+	done
+
+	for FILE in "${cyclerFileArray[@]}"; do
+		i=$( basename "${FILE}" )
+		choiceArray+=("${i}")
+	done
+
+	for DIRECTORY in "${cyclerDirArray[@]}"; do
+		i=$( basename "${DIRECTORY}" ) 
+		choiceArray+=("[DIR]	${i}")
+	done
+
+	#IFS=$'\n' sorted=($(sort <<<"${filepathArray[*]}"))
+	#unset IFS
+	
+#	SECOND ARRAY BUILDING
+
+#	open-self
+#       count="${#choiceArray[@]}"
+
+#       choiceArray["${count}"]="$(basename ${choice})"
+	
+#	count="$(( count + 1 ))"
+
+#       return-clause
+        count="${#choiceArray[@]}"
+
+        choiceArray["${count}"]="${RETURNTEXT:-Return}"
+	
+	count="$(( count + 1 ))"
+
+	
+	while [ 1 ]; do
+
+#		"START"
+		clear
+		say_hello
+		echo " - Last Picked: ${LASTPICKED}" # Needs a function to save the remove the $HOME part of the filepath
+		echo " - ${1:${HOMELENGTH}}'s contents: "
+
+		for (( i=0; i<"${count}"; i++ )); do
+	                echo " -- ${i}. ${choiceArray[$i]}"
+	        done
+	
+	        while [ 1 ]; do
+        	        echo ""
+                	echo " - So, whadaya openin' ?"
+	                read -p " -- Choice: " index
+
+        	        if [[ "${index}" -lt "${count}" ]]; then
+	                        break
+	                fi
+
+        	        echo " -- ${index} is invalid ${failStr}"
+	        done
+
+		#if [[ "${index}" -eq "$(( count - 2 ))" ]]; then
+		if [[ "${index}" -eq "$(( count - 1 ))" ]]; then
+	                echo " - Returning..."
+			unset filepathArray
+			unset choiceArray
+			unset count
+        	        return 0
+	        fi
+
+#		if [[ "${index}" -eq "$(( count - 1 ))" ]]; then
+#			open "${choice}"
+#			continue
+#		fi
+
+		choice="${filepathArray["${index}"]}"
+
+	# if 	: Recursion happens if dir
+	# elif	: the extension should use 'open'
+	# else	: vim the file
+
+		inform_subtopic "$(basename "${choice}")"
+
+		if [ -d "${choice}" ]; then
+			initiate_procedure_cycler "${choice}"
+		elif [[ "${extensionsArray[*]}" =~ "${choice##*.}" ]]; then
+			open "${choice}"
+		else
+			vim "${choice}"
+		fi
+
+	done
+
+
+	echo " - Returning..."
+	unset filepathArrayUpload
+	unset filepathArray
+	unset choiceArray
+	unset count
+
+	return 0
+}
+

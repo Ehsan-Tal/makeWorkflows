@@ -1,0 +1,322 @@
+
+
+#########################################
+#		helpers			#
+#########################################
+
+
+function initiate_procedure_play(){
+#	asks user which games folder they want to pick
+#	may even allow for a "random" one
+#	TODO: make lutris...
+#	ideally, add games to the lutris launcher - off-steam allows brothers' access
+#	MC is a different issue as it has a launcher, is minecraft, etc
+
+	# Start of the main loop structure
+	while [ 1 ]; do
+	clear
+	say_hello || echo "no loadada"
+
+	declare -a submenuarray
+
+        # initialising variables
+	STEAM="Steam"	
+	LUTRIS="Lutris"	
+	MINECRAFT="Minecraft"	
+        
+	# Initialising array
+        submenuarray[0]="${STEAM}"
+        submenuarray[1]="${LUTRIS}"
+        submenuarray[2]="${MINECRAFT}"
+
+
+        count="${#submenuarray[*]}"
+
+#       return-clause
+        RETURNCLAUSE="${count}"
+        submenuarray["${RETURNCLAUSE}"]="${RETURNTEXT:-GAYmes}"
+        count="$(( count + 1 ))"
+
+	echo " - LAST PICKED: ${LASTPICKED}"
+        echo " - OPTIONS: "
+
+                for (( i=0; i<${count}; i++ )); do
+                        echo " -- ${i}. ${submenuarray[${i}]}"
+                done
+
+                while [ 1 ]; do
+                        echo -e "\n - So, whadaya doin' ?"
+                        read -p " -- Choice: " choice
+
+                        if [[ -n "${choice}" ]] && [[ "${choice}" -lt "${count}" ]]; then
+                                break
+                        fi
+
+                        echo " -- ${choice} is invalid ${failStr}"
+
+                done
+#               end of echo-loop
+
+        topic="${submenuarray[${choice}]}"
+
+        case $topic in
+	        "${STEAM}")
+                        inform_subtopic "$topic"
+			initiate_procedure_steam
+                ;;
+		"${LUTRIS}")
+			inform_subtopic "$topic"
+			initiate_procedure_lutris
+		
+		;;
+		"${MINECRAFT}")
+			inform_subtopic "$topic"
+			launch_minecraftlauncher
+		;;
+		"${RETURNTEXT}")
+      			echo " - Returning..."
+                        
+			unset submenuarray
+			unset count
+			unset choice
+                        
+			return 0
+		;;
+                *)
+                        echo "$topic is invalid"
+                ;;
+
+                esac
+
+                unset submenuarray
+        done
+#       end of main loop
+
+	return 0
+}
+
+
+#########################################
+#		helpers			#
+#########################################
+
+
+function launch_minecraftlauncher(){
+	gnome-terminal --wait --tab -- bash -c "minecraft-launcher"
+	return 0
+}
+
+
+function run_lutris_game(){
+	#lutris -e ~/Games/gog/ziggurat/start.sh 
+	#lutris -e "$HOME/Games/${1}"
+	#gnome-terminal --wait --tab -- bash -c "steam"
+	return 0
+}
+
+
+function launch_steamplatform(){
+	gnome-terminal --tab -- bash -c "steam"
+	return 0
+}
+
+
+function run_steam_game(){
+#	steam steam://run/${1}
+	
+#	gnome-terminal --wait --tab -- bash -c "steam steam://run/${1}" 
+	
+#	code by ki9us on https://github.com/ValveSoftware/steam-for-linux/issues/1721
+#	TODO: understand this
+# we make a silent subshell for steam, redirect STDERR to STDOUT
+# then we transfer STDOUT to a subshell where each line is read for the magic words.
+	steam -silent -applaunch $1 2>&1 | tee >(
+		while read line; do
+    			if [[ $line == *"Game process removed: AppID $1"* ]]; then
+      				sleep 10; steam -shutdown; break
+    			fi
+  		done
+	)
+
+	return 0
+}
+
+
+#########################################
+#		procedures		#
+#########################################
+
+
+function initiate_procedure_lutris(){
+	start_subprocedure_WIP
+
+	#echo " - LAST PICKED: ${LASTPICKED}"
+#	        if [ -n "${DURATION}" ]; then
+  #              echo " - You played ${name} for ${DURATION} seconds !"
+ #               unset DURATION
+#        fi
+#echo " - Options: "
+	return 0
+}
+
+
+function initiate_procedure_steam(){
+
+#	Collects the installed Steam Library and allows
+#	integer inputs to decide what game will be launched
+
+#	Variables
+#	steamGames=()
+#		extracts details from installed steam games
+#	steamGameHeaders=()
+#		uses an index to store a game's steam name
+#	steamGameCodes=()
+#		uses an index to store a game's steam code
+#	steamGameBlacklist=() | static
+#		used to avoid the "Proton x.x" clutter
+#	steamGameString=""
+#		used to avoid multiple array reads
+#	steamGameIndex=0
+#		used to couple name and code
+#
+#	Reasons/Workarounds
+#	mapfile allows us to map STDOUT to an array
+#	run_steam_game allows us to mute its STDOUT
+#	unset allows us refreshes and avoid conflicts
+
+	steamGameBlacklist=()
+
+	steamGameBlacklist=(	
+"1245040-Proton 5.0"
+"1391110-Steam Linux Runtime - Soldier"
+"1493710-Proton Experimental"
+"1580130-Proton 6.3"
+"1887720-Proton 7.0"
+"228980-Steamworks Common Redistributables"
+)
+	while [ 1 ]; do
+	clear
+	say_hello
+
+	if [ -n "${DURATION}" ]; then
+		echo " - You played ${name} for ${DURATION} seconds !"
+		unset DURATION
+	fi
+
+	echo " - LAST PICKED: ${LASTPICKED}"
+	echo " - Steam Games:"
+	
+
+#	gather games on drive
+
+	steamGames=()
+	steamGameHeaders=()
+	steamGameCodes=()
+
+	mapfile -t steamGames < <( grep -n "name" ~/.steam/steam/steamapps/*.acf | sed -e 's/^.*_//;s/\.acf:.:/ /;s/name//;s/"//g;s/\t//g;s/ /-/' | sort --field-separator='-' -k2 )	
+
+	count="${#steamGames[*]}"
+	steamGameString=""
+	steamGameIndex=0
+
+	for (( i=0; i<"${count}"; i++ )); do
+
+	if [ "${steamGameIndex}" -ge "${count}" ]; then
+		break
+	fi
+		steamGameString="${steamGames[$i]}"
+
+	if  [[ "${steamGameBlacklist[*]}" =~ "${steamGameString}" ]]; then
+		continue
+	fi
+
+		steamGameHeaders["${steamGameIndex}"]=$( echo "${steamGameString}" | cut -d'-' -f2- )
+		steamGameCodes["${steamGameIndex}"]=$( echo "${steamGameString}" | cut -d'-' -f 1 )
+
+#		echo "${steamGameStrnig}"
+#		echo "${steamGameHeaders["${steamGameIndex}"]}"
+#		echo "${steamGameCodes["${steamGameIndex}"]}"
+		
+		steamGameIndex=$(( steamGameIndex + 1 ))
+	done
+
+	unset steamGameString
+	unset steamGameIndex
+
+#	list choices
+
+	count="${#steamGameHeaders[*]}"
+	
+#	return-clause
+
+	STEAMCLAUSE="${count}"
+	steamGameHeaders["${STEAMCLAUSE}"]="Launch Steam"
+
+	count=$(( count + 1 ))
+
+#	return-clause
+
+	RETURNCLAUSE="${count}"
+	steamGameHeaders["${RETURNCLAUSE}"]="${RETURNTEXT:-Return}"
+
+	count=$(( count + 1 ))
+
+	for (( i=0; i<"${count}"; i++ )); do
+		echo " -- ${i}. ${steamGameHeaders[$i]}"
+	done
+
+	while [ 1 ]; do
+		echo -e "\n - So, whadaya playin' ?"
+		read -p " --- Choice: " choice
+		
+		if [[ "${choice}" -lt "${count}" ]]; then
+			break
+		fi
+
+		echo " --- ${choice} is invalid ${failStr}"
+	
+	done
+
+#	run choice or exit
+
+	if [[ "${choice}" -eq "${STEAMCLAUSE}" ]]; then
+		echo -e " - Launching Steam..."
+		launch_steamplatform
+
+	elif [[ "${choice}" -lt "${RETURNCLAUSE}" ]]; then
+
+		name="${steamGameHeaders[$choice]}"
+		code="${steamGameCodes[$choice]}"
+
+		echo -e " - Launching ${name}..."
+		
+		inform_subtopic "$name"
+		
+		STARTGAYMING="$SECONDS"
+		run_steam_game "$code" #> /dev/null 2>&1
+		
+		ENDGAYMING="$SECONDS"
+		DURATION="$((ENDGAYMING - STARTGAYMING))"
+		
+		unset ENDGAYMING
+		unset STARTGAYMING
+	else
+		echo " - Returning from Steam procedure..."
+		unset steamGames
+		unset steamGameCodes
+		unset steamGameHeaders
+		break
+	fi
+
+
+	unset steamGames
+	unset steamGameCodes
+	unset steamGameHeaders
+
+	done
+
+	unset steamGameBlacklist
+	
+	return 0
+}
+

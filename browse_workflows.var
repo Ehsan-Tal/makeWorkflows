@@ -1,0 +1,95 @@
+
+
+function initiate_procedure_browse(){
+
+        
+	# Start of the main loop structure
+	while [ 1 ]; do
+	say_hello || echo -e "\nOh, say_hello isn't loaded ?"
+        
+	declare -a submenuarray
+	declare -A BROWSEURLARRAY
+
+        # initialising variables
+	YOUTUBEBROWSE="YouTube"
+	FIREFOXBROWSE="Firefox"
+		
+	#	initialising
+	BROWSEURLARRAY["${YOUTUBEBROWSE}"]="https://www.youtube.com/"
+	BROWSEURLARRAY["${FIREFOXBROWSE}"]="about:newtab"
+
+	#I would like the array to build itself, regarding the numbers
+	# it would also be fun if they were sorted
+	# TODO: enumerate dynamically and by Alphabetical order
+	# we can  use the =(
+	#	key name
+	#	...`
+	# )
+
+        # Initialising array
+        submenuarray[0]="${YOUTUBEBROWSE}"
+        submenuarray[1]="${FIREFOXBROWSE}"
+
+        count="${#submenuarray[*]}"
+
+#       return-clause
+        RETURNCLAUSE="${count}"
+        submenuarray["${RETURNCLAUSE}"]="${RETURNTEXT:-Return}"
+        count="$(( count + 1 ))"
+
+
+	echo " - LAST PICKED: ${LASTPICKED}"
+	echo " - OPTIONS: "
+
+                for (( i=0; i<${count}; i++ )); do
+                        echo " -- ${i}. ${submenuarray[${i}]}"
+                done
+
+                while [ 1 ]; do
+                        echo -e "\n - So, whadaya browsin' ?"
+                        read -p " -- Choice: " choice
+
+                        if [[ -n "${choice}" ]] && [[ "${choice}" -lt "${count}" ]]; then
+                                break
+                        fi
+
+                        echo " -- ${choice} is invalid ${failStr}"
+
+                done
+#               end of echo-loop
+
+        topic="${submenuarray[${choice}]}"
+
+        case $topic in
+	        "${YOUTUBEBROWSE}"|"${FIREFOXBROWSE}")
+                        inform_subtopic "$topic"
+			open_firefox_tab "${BROWSEURLARRAY[$topic]}"
+                ;;
+		"${RETURNTEXT}")
+      			echo " - Returning..."
+                        
+			unset submenuarray
+			unset count
+			unset choice
+                        
+			return 0
+		;;
+                *)
+                        echo "$topic is invalid"
+                ;;
+
+                esac
+
+                unset submenuarray
+        done
+#       end of main loop
+
+	return 0
+}
+
+
+function open_firefox_tab(){
+		gnome-terminal --tab -- bash -c "firefox --new-tab ${1}"
+	return 0
+}
+

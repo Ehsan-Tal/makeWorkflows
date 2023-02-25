@@ -1,0 +1,116 @@
+
+
+function initiate_procedure_work(){
+# Start of the main loop structure
+
+	while [ 1 ]; do
+	say_hello || echo "no loadada"
+        
+	declare -a submenuarray
+
+        # initialising variables
+	IDE="VS Code"
+	PROGRAMMING="Programming"	
+	SCRIPTING="Scripting"
+	GENERALGRAPHICDESIGN="General Graphic Design"
+	PIXELGRAPHICDESIGN="Pixel Graphic Design"
+
+
+        # InitiaLising array
+        submenuarray[0]="${IDE}"
+        submenuarray[1]="${PROGRAMMING}"
+        submenuarray[2]="${SCRIPTING}"
+        submenuarray[3]="${GENERALGRAPHICDESIGN}"
+        submenuarray[4]="${PIXELGRAPHICDESIGN}"
+
+        count="${#submenuarray[*]}"
+
+#       return-clause
+        RETURNCLAUSE="${count}"
+        submenuarray["${RETURNCLAUSE}"]="${RETURNTEXT:-RETURN}"
+        count="$(( count + 1 ))"
+
+
+	echo " - LAST PICKED: ${LASTPICKED}"
+        echo " - OPTIONS: "
+
+                for (( i=0; i<${count}; i++ )); do
+                        echo " -- ${i}. ${submenuarray[${i}]}"
+                done
+
+                while [ 1 ]; do
+                        echo -e "\n - So, whadaya doin' ?"
+                        read -p " -- Choice: " choice
+
+                        if [[ -n "${choice}" ]] && [[ "${choice}" -lt "${count}" ]]; then
+                                break
+                        fi
+
+                        echo " -- ${choice} is invalid ${failStr}"
+
+                done
+#               end of echo-loop
+
+        topic="${submenuarray[${choice}]}"
+
+        case $topic in
+	        "${IDE}")
+                        inform_subtopic "$topic"
+			start_subprocedure_WIP
+                ;;
+                "${PROGRAMMING}")
+                        inform_subtopic "$topic"
+			start_subprocedure_WIP
+                ;;
+       	        "${SCRIPTING}")
+                        inform_subtopic "$topic"
+			start_subprocedure_WIP
+                ;;
+	        "${GENERALGRAPHICDESIGN}")
+                        inform_subtopic "$topic"
+			start_subprocedure_WIP
+                ;;
+	        "${PIXELGRAPHICDESIGN}")
+                        inform_subtopic "$topic"
+			start_subprocedure_WIP
+                ;;                                
+		"${RETURNTEXT}")
+      			echo " - Returning..."
+                        
+			unset submenuarray
+			unset count
+			unset choice
+                        
+			return 0
+		;;
+                *)
+                        echo "$topic is invalid"
+                ;;
+
+                esac
+
+                unset submenuarray
+        done
+#       end of main loop
+
+	return 0
+}
+
+function open_firefox_tabs(){
+	firefox --new-tab "${1}"
+	
+	return 0
+}
+
+function open_visual_studio_code(){
+	echo "No choice here !"
+	echo "Ensure you know the UX before you start experimenting here"
+	echo " - this needs a cycler sort of thing"
+	project="YTDAILY"
+
+	echo " - LAUNCHING ${project}"
+	code "$HOME/Projects/${project}"
+
+	return 0
+
+}

@@ -1,0 +1,113 @@
+
+function initiate_procedure_write(){
+
+# Start of the main loop structure
+	while [ 1 ]; do
+
+	say_hello || echo "write has no loadingsss"
+
+        declare -a submenuarray
+
+        # initialising variables
+	LANGUAGEPRACTICE="Albanian Practice"
+	STORYWRITING="Stories"
+	GARBAGESTREAM="just write"
+	FANTASYWRITING="Fantasies, i.e., useless work"
+	ATTRIBUTEWRITING="Life Strategising"
+	BLOGWRITING="Blogs"
+	IDEADUMPING="Pondering Ideas"
+        TODOWRITING="Todos"
+
+        # Initialising array
+        submenuarray[0]="${LANGUAGEPRACTICE}"
+        submenuarray[1]="${STORYWRITING}"
+        submenuarray[2]="${GARBAGESTREAM}"
+        submenuarray[3]="${FANTASYWRITING}"
+        submenuarray[4]="${ATTRIBUTEWRITING}"
+        submenuarray[5]="${BLOGWRITING}"
+        submenuarray[6]="${IDEADUMPING}"
+        submenuarray[7]="${TODOWRITING}"
+
+        count="${#submenuarray[*]}"
+
+#       return-clause
+        RETURNCLAUSE="${count}"
+        submenuarray["${RETURNCLAUSE}"]="${RETURNTEXT:-Return}"
+        count="$(( count + 1 ))"
+
+	echo " - LAST PICKED: ${LASTPICKED}"
+        echo " - OPTIONS: "
+
+       	for (( i=0; i<${count}; i++ )); do
+        	echo " -- ${i}. ${submenuarray[${i}]}"
+        done
+
+                while [ 1 ]; do
+                        echo -e "\n - So, whadaya doin' ?"
+                        read -p " -- Choice: " choice
+
+                        if [[ -n "${choice}" ]] && [[ "${choice}" -lt "${count}" ]]; then
+                                break
+                        fi
+
+                        echo " -- ${choice} is invalid ${failStr}"
+
+                done
+#               end of echo-loop
+
+        topic="${submenuarray[${choice}]}"
+
+
+        case $topic in
+                "${LANGUAGEPRACTICE}")
+                	inform_subtopic "$topic"
+			start_subprocedure_WIP
+                ;;
+                "${STORYWRITING}")
+			inform_subtopic "$topic"
+			start_subprocedure_WIP
+                ;;
+		"${GARBAGESTREAM}")
+			inform_subtopic "$topic"
+			start_subprocedure_WIP		
+		;;
+		"${FANTASYWRITING}")
+			inform_subtopic "$topic"
+			start_subprocedure_WIP		
+		;;
+		"${ATTRIBUTEWRITING}")
+			inform_subtopic "$topic"
+			start_subprocedure_WIP		
+		;;
+		"${BLOGWRITING}")
+			inform_subtopic "$topic"
+			start_subprocedure_WIP
+		;;
+		"${IDEADUMPING}")
+			inform_subtopic "$topic"
+			start_subprocedure_WIP		
+		;;
+		"${TODOWRITING}")
+			inform_subtopic "$topic"
+			start_subprocedure_WIP
+		;;
+		"${RETURNTEXT}")
+      			echo " - Returning..."
+        		unset submenuarray
+			unset count
+			unset choice
+			unset RETURNCLAUSE
+        		return 0
+		;;
+                *)
+                        echo "$topic is invalid"
+                ;;
+        esac
+
+        unset submenuarray
+
+        done
+#       end of main loop
+	
+	return 0
+}	

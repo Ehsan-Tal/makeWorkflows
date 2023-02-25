@@ -1,0 +1,125 @@
+
+function initiate_procedure_listen(){
+
+# Start of the main loop structure
+        while [ 1 ]; do
+	say_hello || echo "no loadada"
+        declare -a submenuarray
+
+        # initialising variables
+	MUSICSTREAMER="Spotify"	
+	PODCASTPLAYER="Podcast Natively"
+	MUSICPLAYER="Music Natively"
+	COMMUNICATION="Discord"
+
+        # Initialising array
+	submenuarray[0]="${MUSICSTREAMER}"
+	submenuarray[1]="${PODCASTPLAYER}"
+	submenuarray[2]="${MUSICPLAYER}"
+	submenuarray[3]="${COMMUNICATION}"
+
+        count="${#submenuarray[*]}"
+
+#       return-clause
+        RETURNCLAUSE="${count}"
+        submenuarray["${RETURNCLAUSE}"]="${RETURNTEXT:-Return}"
+        count="$(( count + 1 ))"
+
+	echo " - LAST PICKED: ${LASTPICKED}"
+        echo " - OPTIONS: "
+  
+  	if [ -n "${LISTENDURATION}" ]; then
+                echo " - Duration: ${topic} for ${LISTENDURATION} seconds"
+                unset LISTENDURATION
+        fi
+
+        for (( i=0; i<${count}; i++ )); do
+		echo " -- ${i}. ${submenuarray[${i}]}"
+        done
+
+                while [ 1 ]; do
+                        echo -e "\n - So, whadaya doin' ?"
+                        read -p " -- Choice: " choice
+
+                        if [[ -n "${choice}" ]] && [[ "${choice}" -lt "${count}" ]]; then
+                                break
+                        fi
+
+                        echo " -- ${choice} is invalid ${failStr}"
+
+                done
+#               end of echo-loop
+
+        topic="${submenuarray[${choice}]}"
+
+        case $topic in
+	        "${MUSICSTREAMER}")
+                        inform_subtopic "$topic"
+			start_subprocedure_spotify
+                ;;
+	        "${PODCASTPLAYER}")
+                        inform_subtopic "$topic"
+			start_subprocedure_podcastplayer
+                ;;
+	        "${MUSICPLAYER}")
+                        inform_subtopic "$topic"
+			start_subprocedure_musicplayer
+                ;;
+                "${COMMUNICATION}")
+                        inform_subtopic "$topic"
+			start_subprocedure_discord
+                ;;
+		"${RETURNTEXT}")
+      			echo " - Returning..."
+        		unset submenuarray
+			unset count
+			unset choice
+			unset RETURNCLAUSE
+        		return 0
+		;;
+                *)
+                        echo "$topic is invalid"
+                ;;
+        esac
+
+        unset submenuarray
+
+        done
+#       end of main loop
+	
+	return 0
+}
+
+
+function start_subprocedure_spotify(){
+	SPOTIFYSTART="$SECONDS"
+	spotify
+	SPOTIFYEND="$SECONDS"
+	LISTENDURATION="$((SPOTIFYEND - SPOTIFYSTART))"
+	
+	unset SPOTIFYSTART
+	unset SPOTIFYEND
+
+	return 0
+}
+
+
+function start_subprocedure_podcastplayer(){
+	start_subprocedure_WIP
+
+	return 0
+}
+
+
+function start_subprocedure_musicplayer(){
+	start_subprocedure_WIP
+
+	return 0
+}
+
+
+function start_subprocedure_discord(){
+	start_subprocedure_WIP
+
+	return 0
+}
