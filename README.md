@@ -1,4 +1,6 @@
- This is a gargantuan task ! Separate it into stages, we are making the final one | 2 Dec 1839
+NOTE: I will have to work on this a lot, but I am busy at moment. Future me is theoretically able to do the admin eventually.
+
+This is a gargantuan task ! Separate it into stages, we are making the final one | 2 Dec 1839
 
 NOTE:
 	While I might use different words, some things will produce the same workflow,
