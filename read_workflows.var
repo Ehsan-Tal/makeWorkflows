@@ -42,7 +42,7 @@ function initiate_procedure_read(){
 
         if [ -n "${READDURATION}" ]; then
                 echo " - Duration: ${topic} for ${READDURATION} seconds"
-                unset LISTENDURATION
+                unset READDURATION
         fi
 
 
@@ -72,7 +72,7 @@ function initiate_procedure_read(){
                 ;;
 	        "${LIBRARYBROWSE}"|"${READINGFORFUN}")
                         inform_subtopic "$topic"
-			start_subprocedure_calibre
+			start_subprocedure_CALIBRE
                 ;;
 		"${LIBRARYSPECIFIC}")
                         inform_subtopic "$topic"
@@ -80,7 +80,7 @@ function initiate_procedure_read(){
                 ;;             	        
 	        "${NOTES}")
                         inform_subtopic "$topic"
-			start_subprocedure_calibre
+			start_subprocedure_CALIBRE
                 ;;             	        
 	        "${EMAIL}")
                         inform_subtopic "$topic"
@@ -96,7 +96,7 @@ function initiate_procedure_read(){
                 ;;
 	        "${ANKI}")
                         inform_subtopic "$topic"
-			start_subprocedure_WIP
+			start_subprocedure_ANKI
                 ;;
 		"${RETURNTEXT}")
       			echo " - Returning..."
@@ -120,9 +120,16 @@ function initiate_procedure_read(){
 }
 
 
-function start_subprocedure_calibre(){
+function start_subprocedure_CALIBRE(){
+	gnome-terminal --tab -- bash -c "calibre"
+
+	return 0
+}
+
+
+function start_subprocedure_ANKI(){
 	READSTART="$SECONDS"
-	calibre
+	gnome-terminal --tab --wait -- bash -c "anki"
 	READEND="$SECONDS"
 
 	READDURATION="$((READEND - READSTART))"

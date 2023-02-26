@@ -17,6 +17,7 @@ function initiate_procedure_write(){
 	BLOGWRITING="Blogs"
 	IDEADUMPING="Pondering Ideas"
         TODOWRITING="Todos"
+	OBSIDIANWRITING="Launch Obsidian"
 
         # Initialising array
         submenuarray[0]="${LANGUAGEPRACTICE}"
@@ -27,6 +28,7 @@ function initiate_procedure_write(){
         submenuarray[5]="${BLOGWRITING}"
         submenuarray[6]="${IDEADUMPING}"
         submenuarray[7]="${TODOWRITING}"
+	submenuarray[8]="${OBSIDIANWRITING}"
 
         count="${#submenuarray[*]}"
 
@@ -34,6 +36,11 @@ function initiate_procedure_write(){
         RETURNCLAUSE="${count}"
         submenuarray["${RETURNCLAUSE}"]="${RETURNTEXT:-Return}"
         count="$(( count + 1 ))"
+
+	if [ -n "${WRITEDURATION}" ]; then
+		echo " - ${topic} for ${WRITEDURATION} seconds"
+		unset WRITEDURATION
+	fi
 
 	echo " - LAST PICKED: ${LASTPICKED}"
         echo " - OPTIONS: "
@@ -91,6 +98,10 @@ function initiate_procedure_write(){
 			inform_subtopic "$topic"
 			start_subprocedure_WIP
 		;;
+		"${OBSIDIANWRITING}")
+			inform_subtopic "$topic"
+			start_subprocedure_OBSIDIAN
+		;;
 		"${RETURNTEXT}")
       			echo " - Returning..."
         		unset submenuarray
@@ -111,3 +122,46 @@ function initiate_procedure_write(){
 	
 	return 0
 }	
+
+
+function start_subprocedure_OBSIDIAN(){
+	
+	OBSIDIANDIRECTORY="/opt/obsidian"
+	
+	if [ ! -d "${OBSIDIANDIRECTORY}" ]; then
+		echo " -- ERROR: Obsidian not found in /opt ${failStr}"
+		echo " -- Consider creating a directory over there"
+		echo " -- Installing it is an easy procedure"
+		echo " -- Steps are available elsewhere"
+		echo " -- an .AppImage, an .ico, and a .desktop"
+		echo -e "\n -- press any key to return"
+		read
+
+	fi
+
+	OBSIDIANAPPIMAGE="$(find ${OBSIDIANDIRECTORY} -name *.AppImage)"
+	
+	if [ -z "${OBSIDIANAPPIMAGE}" ]; then
+		echo " -- ERROR: no AppImage ${failStr}"
+		echo " -- Installing it is an easy procedure"
+		echo " -- Steps are available elsewhere"
+		echo " -- an .AppImage, an .ico, and a .desktop"
+		echo -e "\n -- press any key to return"
+		read
+
+	fi
+	
+	WRITESTART="$SECONDS"
+	gnome-terminal --tab --wait -- bash -c "${OBSIDIANAPPIMAGE}"
+	WRITEEND="$SECONDS"
+
+
+	WRITEDURATION=$(( WRITEEND - WRITESTART ))
+
+	unset WRITESTART
+	unset WRITEEND
+	unset OBSIDIANDIRECTORY
+	unset OBSIDIANAPPIMAGE
+
+	return 0
+}
