@@ -1,4 +1,3 @@
-kkkkkujkiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiil
 
 #########################################
 #		helpers			#
@@ -103,22 +102,19 @@ function initiate_procedure_play(){
 
 
 #	takes in game's filepath as $1
-function check_game_dir(){
+function check_game_file(){
 	subject="$1"
-	present="false"
 
-	if [ -d "${subject}" ]; then
-		present="true"
-	fi
-
-	if [ "${present}"="false" ]; then
-		
+	if [ -a "${subject}" ]; then
+		true
+		# we can also use ':' without the ''
+	else
 		process_error "${subject} not found !" 3
 		ask_consent "Do you want to create it ?"
 
 		if [ "${consent}" = "Y" ]; then
-			process "mkdir ${subject}..." 4
-			mkdir "${subject}"
+			process "touch ${subject}..." 4
+			touch "${subject}"
 		else 
 			process "continuing without ${subject}..." 4
 		
@@ -129,7 +125,6 @@ function check_game_dir(){
 
 	unset consent
 	unset subject
-	unset present
 
 	return 0
 }
@@ -216,6 +211,9 @@ function initiate_procedure_steam(){
 #		used to avoid multiple array reads
 #	steamGameIndex=0
 #		used to couple name and code
+#
+#	gametextfilepath
+#		used to store summaries, etc.
 #
 #	Reasons/Workarounds
 #	mapfile allows us to map STDOUT to an array
@@ -330,13 +328,18 @@ function initiate_procedure_steam(){
 		
 		inform_subtopic "$name"
 
+		gametextfilepath="${GAMEDIRECTORYFILEPATH}/${name}.md"
+
+		check_game_file "${gametextfilepath}"
+
 		
-		gamefilepath="${GAMEDIRECTORYFILEPATH}/${name}"
-		gametextfilepath="${gamefilepath}/${name}.md"
-
-		check_game_dir "${gamefilepath}"
-
-		[ -d "${gamefilepath}" ] && nvim "${gametextfilepath}"
+		if [ -a "${gametextfilepath}" ]; then
+			process "nvim ${gametextfilepath}..." 3
+			echo -e "\n# ${datetime} \n\n" >> "${gametextfilepath}"
+			nvim "${gametextfilepath}"
+		
+		fi
+		
 
 		STARTGAYMING="$SECONDS"
 		run_steam_game "$code" #> /dev/null 2>&1
@@ -345,12 +348,13 @@ function initiate_procedure_steam(){
 		DURATION="$((ENDGAYMING - STARTGAYMING))"
 		
 		
-		if [ -d "${gamefilepath}"]; then
+		if [ -a "${gametextfilepath}" ]; then
 
 			ask_consent "Summarise experience and add objectives for future ?"
 
 			if [ "${consent}" = "Y" ]; then
 				process "nvim ${gametextfilepath}..." 3
+				echo -e "\n# ${datetime} \n\n" >> "${gametextfilepath}"
 				nvim "${gametextfilepath}"
 			else 
 				process "continuing without summary..." 3
