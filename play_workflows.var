@@ -1,4 +1,4 @@
-
+kkkkkujkiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiil
 
 #########################################
 #		helpers			#
@@ -20,6 +20,7 @@ function initiate_procedure_play(){
 	declare -a submenuarray
 
         # initialising variables
+	GAMEDIRECTORYFILEPATH="$HOME/Documents/Games"
 	STEAM="Steam"	
 	LUTRIS="Lutris"	
 	MINECRAFT="Minecraft"	
@@ -101,6 +102,39 @@ function initiate_procedure_play(){
 #########################################
 
 
+#	takes in game's filepath as $1
+function check_game_dir(){
+	subject="$1"
+	present="false"
+
+	if [ -d "${subject}" ]; then
+		present="true"
+	fi
+
+	if [ "${present}"="false" ]; then
+		
+		process_error "${subject} not found !" 3
+		ask_consent "Do you want to create it ?"
+
+		if [ "${consent}" = "Y" ]; then
+			process "mkdir ${subject}..." 4
+			mkdir "${subject}"
+		else 
+			process "continuing without ${subject}..." 4
+		
+		fi
+
+	fi
+	
+
+	unset consent
+	unset subject
+	unset present
+
+	return 0
+}
+
+
 function launch_minecraftlauncher(){
 	gnome-terminal --wait --tab -- bash -c "minecraft-launcher"
 	return 0
@@ -133,8 +167,12 @@ function run_steam_game(){
 	steam -silent -applaunch $1 2>&1 | tee >(
 		while read line; do
     			if [[ $line == *"Game process removed: AppID $1"* ]]; then
-      				sleep 10; steam -shutdown; break
-    			fi
+				process 'returning in 5 !' 4
+				sleep 5
+				steam -shutdown
+				break
+			
+			fi
   		done
 	)
 
@@ -203,8 +241,8 @@ function initiate_procedure_steam(){
 		unset DURATION
 	fi
 
-	echo " - LAST PICKED: ${LASTPICKED}"
-	echo " - Steam Games:"
+	echo " - LAST PICKED: ${LASTPICKED}" 
+	echo " - Steam Games:" 
 	
 
 #	gather games on drive
@@ -262,25 +300,25 @@ function initiate_procedure_steam(){
 	count=$(( count + 1 ))
 
 	for (( i=0; i<"${count}"; i++ )); do
-		echo " -- ${i}. ${steamGameHeaders[$i]}"
+		process "${i}. ${steamGameHeaders[$i]}" 2
 	done
 
 	while [ 1 ]; do
-		echo -e "\n - So, whadaya playin' ?"
+		process "So, whadaya playin' ?" 1
 		read -p " --- Choice: " choice
 		
 		if [[ "${choice}" -lt "${count}" ]]; then
 			break
 		fi
 
-		echo " --- ${choice} is invalid ${failStr}"
+		process_error "${choice} is invalid ${failStr}" 3
 	
 	done
 
 #	run choice or exit
 
 	if [[ "${choice}" -eq "${STEAMCLAUSE}" ]]; then
-		echo -e " - Launching Steam..."
+		process "Launching Steam..." 1
 		launch_steamplatform
 
 	elif [[ "${choice}" -lt "${RETURNCLAUSE}" ]]; then
@@ -288,27 +326,50 @@ function initiate_procedure_steam(){
 		name="${steamGameHeaders[$choice]}"
 		code="${steamGameCodes[$choice]}"
 
-		echo -e " - Launching ${name}..."
+		process "Launching ${name}..." 1
 		
 		inform_subtopic "$name"
+
 		
+		gamefilepath="${GAMEDIRECTORYFILEPATH}/${name}"
+		gametextfilepath="${gamefilepath}/${name}.md"
+
+		check_game_dir "${gamefilepath}"
+
+		[ -d "${gamefilepath}" ] && nvim "${gametextfilepath}"
+
 		STARTGAYMING="$SECONDS"
 		run_steam_game "$code" #> /dev/null 2>&1
 		
 		ENDGAYMING="$SECONDS"
 		DURATION="$((ENDGAYMING - STARTGAYMING))"
 		
+		
+		if [ -d "${gamefilepath}"]; then
+
+			ask_consent "Summarise experience and add objectives for future ?"
+
+			if [ "${consent}" = "Y" ]; then
+				process "nvim ${gametextfilepath}..." 3
+				nvim "${gametextfilepath}"
+			else 
+				process "continuing without summary..." 3
+			fi
+		fi
+
+
 		unset ENDGAYMING
 		unset STARTGAYMING
 	else
-		echo " - Returning from Steam procedure..."
+		process "Returning from Steam procedure..." 1
 		unset steamGames
 		unset steamGameCodes
 		unset steamGameHeaders
 		break
 	fi
 
-
+	unset gametextfilepath	
+	unset gamefilepath
 	unset steamGames
 	unset steamGameCodes
 	unset steamGameHeaders

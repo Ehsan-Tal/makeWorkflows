@@ -29,16 +29,19 @@ failStr=" ❌"
 datetime=$(date "+%Y-%m-%dT%T%:z")
 date=$(date "+%Y-%m-%d")
 
-RED='\033[0;31m'
-YELLOW='\033[0;33m'
-NC='\033[0m'
+RED="\e[31m"
+YELLOW="\e[33m"
+RED="\e[31m"
+GREEN="\e[32m"
+LIGHTGREEN="\e[92m"
+LIGHTRED="\e[91m"
+NC="\e[0m"
+
+
 
 script_name="$(basename ${0})"
-
 clean_script_name="${script_name//".sh"/}"
-
 SOURCEDIR="$HOME/Scripts/${clean_script_name}"
-
 LASTPICKED="NONE"
 
 #################################
@@ -71,6 +74,7 @@ function exit_script(){
 function exit_error(){
 	echo " - ending ${script_name}..."
         echo "Mirupafshim, $USER."
+
 	exit 1
 }
 
@@ -78,6 +82,105 @@ function exit_error(){
 #########################
 #	functions	#
 #########################
+
+
+function ask_consent() {
+        # question is internal, response is external
+
+        echo " -- ${1}"
+        read -p " --- Yes/No: " consent
+
+        consent=${consent:0:1}
+        consent=${consent^^}
+
+}
+
+
+function print_status {
+        message="$1"
+
+	echo -e "${message}"
+
+        return 0
+}
+
+
+function process_success {
+        bulletStage="${2}"
+        genre="success:"        
+        tempString=$(printf "%${bulletStage}s")
+        bullets=${tempString// /-} 
+        
+        if [ "${2}" -eq "1" ]; then
+                PRIMARY="${GREEN}"
+        else
+                PRIMARY="${LIGHTGREEN}"
+        fi
+
+        message="${PRIMARY} ${bullets} ${genre}${NC} ${1}"
+
+        print_status "${message}"
+
+        unset message
+        unset PRIMARY
+        unset bulletStage
+        unset genre
+        unset tempString
+        unset bullets
+
+        return 0
+
+}
+
+
+function process_error {
+        bulletStage="${2}"
+        genre="error:"  
+        tempString=$(printf "%${bulletStage}s")
+        bullets=${tempString// /-} 
+
+        if [ "${2}" -eq "1" ]; then
+                PRIMARY="${RED}"
+        else
+                PRIMARY="${LIGHTRED}"
+        fi
+
+        message="${PRIMARY} ${bullets} ${genre}${NC} ${1}"
+
+        print_status "${message}"
+
+        unset message
+        unset PRIMARY
+        unset bulletStage
+        unset genre
+        unset tempString
+        unset bullets
+
+        return 0
+
+}
+
+
+function process {
+        bulletStage="${2}"
+        tempString=$(printf "%${bulletStage}s")
+        bullets=${tempString// /-} 
+
+        if [ "${2}" -eq "1" ]; then
+                echo -e "\n ${bullets} ${1}"
+        else
+                echo -e " ${bullets} ${1}"
+        fi
+
+
+        unset message
+        unset tempString
+        unset bullets
+        unset bulletStage
+
+        return 0
+}
+
 
 
 function say_hello {
@@ -89,13 +192,13 @@ function say_hello {
 
 function inform_topic {
 	LASTPICKED="${1}"
-	clear
+#	clear
 	return 0
 }
 	
 
 function inform_subtopic {
-	clear
+#	clear
 	LASTPICKED="${LASTPICKED}/${1}"
 
 	return 0
