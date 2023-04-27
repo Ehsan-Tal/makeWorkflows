@@ -26,6 +26,8 @@
 START=$SECONDS
 passStr=" ✔️ "
 failStr=" ❌"
+PASS=" ✔️ "
+FAIL=" ❌"
 datetime=$(date "+%Y-%m-%dT%T%:z")
 date=$(date "+%Y-%m-%d")
 
@@ -84,24 +86,32 @@ function exit_error(){
 #########################
 
 
-function ask_consent() {
-        # question is internal, response is external
-
-        echo " -- ${1}"
-        read -p " --- Yes/No: " consent
-
-        consent=${consent:0:1}
-        consent=${consent^^}
-
-}
-
-
 function print_status {
         message="$1"
 
 	echo -e "${message}"
 
         return 0
+}
+
+
+function ask_consent() {
+        # question is internal, response is external
+
+	message="${1}"
+
+	if [ -z "${message}" ]; then 
+		process_error "Not all important variables exist !" 3
+		return 2
+	fi
+
+	process "${message}" 2
+        read -p " --- Yes/No: " consent
+
+        consent=${consent:0:1}
+        consent=${consent^^}
+	
+	return 0
 }
 
 
@@ -117,7 +127,7 @@ function process_success {
                 PRIMARY="${LIGHTGREEN}"
         fi
 
-        message="${PRIMARY} ${bullets} ${genre}${NC} ${1}"
+        message="${PRIMARY} ${bullets} ${genre}${NC} ${1} ${PASS}"
 
         print_status "${message}"
 
@@ -145,7 +155,7 @@ function process_error {
                 PRIMARY="${LIGHTRED}"
         fi
 
-        message="${PRIMARY} ${bullets} ${genre}${NC} ${1}"
+        message="${PRIMARY} ${bullets} ${genre}${NC} ${1} ${FAIL}"
 
         print_status "${message}"
 
@@ -210,10 +220,10 @@ function prepare_source {
         sourcefile="${SOURCEDIR}/${1}"
 
         if ! [ -a ${sourcefile} ]; then
-                echo " - ERROR:: SOURCE FILE ABSENT ${failStr}"
+                process_error "SOURCE FILE ABSENT ${failStr}" 1
                 return 2
         elif ! [ -s ${sourcefile} ]; then
-                echo " - ERROR:: SOURCE FILE EMPTY ${failStr}"
+                process_error "SOURCE FILE EMPTY ${failStr}" 1
                 return 3
         fi
 

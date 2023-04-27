@@ -1,3 +1,4 @@
+#!/bin/bash
 
 #########################################
 #		helpers			#
@@ -50,7 +51,7 @@ function initiate_procedure_play(){
 
                         if [[ -n "${choice}" ]] && [[ "${choice}" -lt "${count}" ]]; then
                                 break
-                        fi
+			fi
 
                         echo " -- ${choice} is invalid ${failStr}"
 
@@ -162,8 +163,8 @@ function run_steam_game(){
 	steam -silent -applaunch $1 2>&1 | tee >(
 		while read line; do
     			if [[ $line == *"Game process removed: AppID $1"* ]]; then
-				process 'returning in 5 !' 4
-				sleep 5
+				process 'returning in 10 !' 4
+				sleep 10
 				steam -shutdown
 				break
 			
@@ -324,22 +325,32 @@ function initiate_procedure_steam(){
 		name="${steamGameHeaders[$choice]}"
 		code="${steamGameCodes[$choice]}"
 
-		process "Launching ${name}..." 1
-		
+		process "Begin: Playing ${name}" 1
 		inform_subtopic "$name"
 
 		gametextfilepath="${GAMEDIRECTORYFILEPATH}/${name}.md"
-
 		check_game_file "${gametextfilepath}"
+	
 
-		
+		process "Begin: Ex ante plan" 2
 		if [ -a "${gametextfilepath}" ]; then
-			process "nvim ${gametextfilepath}..." 3
-			echo -e "\n# ${datetime} \n\n" >> "${gametextfilepath}"
-			nvim "${gametextfilepath}"
-		
+			
+			ask_consent "Make a plan before you play ? (Y/N)"
+
+			if [ "${consent}" = "Y" ]; then 
+				play_datetime=$(date "+%Y-%m-%dT%T%:z")
+				echo -e "\n# ${play_datetime} \n\n" >> "${gametextfilepath}"
+				process "editing ${gametextfilepath}..." 3
+				nvim "${gametextfilepath}"
+
+			else
+				process "Skipping ex ante writing" 3
+			fi
+
+		else
+			process_error "Missing: game text file" 3
 		fi
-		
+
 
 		STARTGAYMING="$SECONDS"
 		run_steam_game "$code" #> /dev/null 2>&1
@@ -348,17 +359,23 @@ function initiate_procedure_steam(){
 		DURATION="$((ENDGAYMING - STARTGAYMING))"
 		
 		
+		process "Begin: Ex post summary" 2
 		if [ -a "${gametextfilepath}" ]; then
 
-			ask_consent "Summarise experience and add objectives for future ?"
+			ask_consent "Summarise experience ? (Y/N)"
+
 
 			if [ "${consent}" = "Y" ]; then
-				process "nvim ${gametextfilepath}..." 3
-				echo -e "\n# ${datetime} \n\n" >> "${gametextfilepath}"
+				summary_datetime=$(date "+%Y-%m-%dT%T%:z")
+				echo -e "\n# ${summary_datetime} \n\n" >> "${gametextfilepath}"
+				process "editing ${gametextfilepath}..." 3
 				nvim "${gametextfilepath}"
-			else 
-				process "continuing without summary..." 3
+			else
+				process "Skipping ex post writing" 3 
 			fi
+
+		else
+			process_error "Missing: game text file" 3
 		fi
 
 

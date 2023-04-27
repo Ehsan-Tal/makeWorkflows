@@ -129,7 +129,7 @@ function initiate_procedure_cycler(){
 		elif [[ "${extensionsArray[*]}" =~ "${choice##*.}" ]]; then
 			open "${choice}"
 		else
-			vim "${choice}"
+			nvim "${choice}"
 		fi
 
 	done
